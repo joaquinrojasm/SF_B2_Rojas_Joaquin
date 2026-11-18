@@ -1,0 +1,55 @@
+name: Docker del registro de estudiantes
+
+on:
+  push:
+    branches: ['feature/xyz']
+    tags: ['v*']
+  pull_request:
+    branches: [develop, main]
+
+permissions:
+  contents: read
+
+jobs:
+  verificar-contenedor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Construir y recrear el contenedor
+        run: |
+          docker build -t registro-estudiantes:1.0.0 ./registro-estudiantes
+          docker image inspect registro-estudiantes:1.0.0 --format '{{.Id}} {{.Size}}'
+          docker run -d --name registro-estudiantes -p 127.0.0.1:8080:80 registro-estudiantes:1.0.0
+          curl --fail --show-error --noproxy "*" --retry 10 --retry-all-errors --retry-delay 1 http://127.0.0.1:8080/ -o inicio.html
+          grep -F 'Registro de estudiantes' inicio.html
+          docker ps --filter name=registro-estudiantes
+          docker logs registro-estudiantes
+          docker stop registro-estudiantes
+          docker rm registro-estudiantes
+          docker run -d --name registro-estudiantes -p 127.0.0.1:8080:80 registro-estudiantes:1.0.0
+          curl --fail --show-error --noproxy "*" --retry 10 --retry-all-errors --retry-delay 1 http://127.0.0.1:8080/ -o recreado.html
+          cmp inicio.html recreado.html
+          docker ps --filter name=registro-estudiantes
+          docker logs registro-estudiantes
+      - name: Limpiar el contenedor temporal
+        if: always()
+        run: |
+          docker logs registro-estudiantes || true
+          docker rm -f registro-estudiantes || true
+  publicar-imagen:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: verificar-contenedor
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publicar imagen en GitHub Container Registry
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          imagen="ghcr.io/${GITHUB_REPOSITORY,,}/registro-estudiantes:${GITHUB_REF_NAME}"
+          docker build -t "$imagen" ./registro-estudiantes
+          docker push "$imagen"

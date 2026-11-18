@@ -1,0 +1,23 @@
+name: CI del registro de estudiantes
+
+on:
+  push:
+    branches: ['feature/xyz']
+  pull_request:
+    branches: [develop, main]
+
+permissions:
+  contents: read
+
+jobs:
+  verificar-registro:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Comprobar la sintaxis de JavaScript
+        run: node --check registro-estudiantes/app.js
+      - name: Ejecutar pruebas del registro
+        run: node --test registro-estudiantes/app.test.cjs
