@@ -31,7 +31,7 @@ docker build -t registro-estudiantes:1.0.0 ./registro-estudiantes
 docker run -d --name registro-estudiantes -p 127.0.0.1:8080:80 registro-estudiantes:1.0.0
 docker ps --filter name=registro-estudiantes
 docker logs registro-estudiantes
-docker image inspect registro-estudiantes:1.0.0 --format '{{.Id}} {{.Size}}'
+docker image ls registro-estudiantes:1.0.0
 ```
 
 Abra http://127.0.0.1:8080. NGINX atiende el puerto 80 dentro del contenedor. Si el puerto 8080 está ocupado, use 127.0.0.1:8081:80. Si Docker no encuentra el daemon, abra Docker Desktop y compruebe su estado con `docker info`.
