@@ -21,6 +21,12 @@ formulario.addEventListener('submit', (evento) => {
   estudiante.textContent = nombre;
   listaEstudiantes.append(estudiante);
 
+  estadoRegistro.textContent = `Se registró a ${nombre}.`;
+
+  const estadoRegistro = document.querySelector('#registro-estado');
+
   formulario.reset();
   campoNombre.focus();
+
+  estadoRegistro.textContent = '';
 });
